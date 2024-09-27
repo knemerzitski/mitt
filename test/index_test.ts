@@ -103,6 +103,30 @@ describe('mitt#', () => {
 			inst.on('foo', foo);
 			expect(events.get('foo')).to.deep.equal([foo, foo]);
 		});
+
+		it('should return closure that calls off', () => {
+			const foo = () => {};
+			const fooOff = inst.on('foo', foo);
+			fooOff();
+			expect(events.get('foo')).to.deep.equal([]);
+		});
+	});
+
+	describe('onMany()', () => {
+		it('should add same listener to all types', () => {
+			const ev = () => {};
+			inst.onMany(['foo', 'bar'], ev);
+			expect(events.get('foo')).to.deep.equal([ev]);
+			expect(events.get('bar')).to.deep.equal([ev]);
+		});
+
+		it('should return closure that calls off for each type', () => {
+			const ev = () => {};
+			const foobarOff = inst.onMany(['foo', 'bar'], ev);
+			foobarOff();
+			expect(events.get('foo')).to.deep.equal([]);
+			expect(events.get('bar')).to.deep.equal([]);
+		});
 	});
 
 	describe('off()', () => {
