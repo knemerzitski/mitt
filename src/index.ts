@@ -29,6 +29,12 @@ export interface Emitter<Events extends BaseEvents> {
 	): () => void;
 	on(type: '*', handler: WildcardHandler<Events>): () => void;
 
+	onMany<Key extends keyof Events>(
+		types: Key[],
+		handler: Handler<Events[Key]>
+	): () => void;
+	onMany(types: '*'[], handler: WildcardHandler<Events>): () => void;
+
 	off<Key extends keyof Events>(
 		type: Key,
 		handler?: Handler<Events[Key]>
@@ -73,6 +79,17 @@ export default function mitt<Events extends BaseEvents>(
 
 		return () => {
 			off(type, handler);
+		};
+	}
+
+	function onMany<Key extends keyof Events>(
+		types: Key[],
+		handler: GenericEventHandler
+	) {
+		types.forEach((type) => on(type, handler));
+
+		return () => {
+			types.forEach((type) => off(type, handler));
 		};
 	}
 
@@ -131,6 +148,7 @@ export default function mitt<Events extends BaseEvents>(
 		 */
 		all,
 		on,
+		onMany,
 		off,
 		emit
 	};
