@@ -1,6 +1,6 @@
 {
-  "name": "mitt",
-  "version": "@knemerzitski/3.0.2",
+  "name": "@knemerzitski/mitt",
+  "version": "3.0.2",
   "description": "Tiny 200b functional Event Emitter / pubsub.",
   "module": "dist/mitt.mjs",
   "main": "dist/mitt.js",
