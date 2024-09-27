@@ -1,6 +1,6 @@
 {
   "name": "mitt",
-  "version": "3.0.1",
+  "version": "@knemerzitski/3.0.1",
   "description": "Tiny 200b functional Event Emitter / pubsub.",
   "module": "dist/mitt.mjs",
   "main": "dist/mitt.js",
@@ -27,14 +27,14 @@
     "docs": "documentation readme src/index.ts --section API -q --parse-extension ts",
     "release": "npm run -s build -s && npm t && git commit -am $npm_package_version && git tag $npm_package_version && git push && git push --tags && npm publish"
   },
-  "repository": "developit/mitt",
+  "repository": "knemerzitski/mitt",
   "keywords": [
     "events",
     "eventemitter",
     "emitter",
     "pubsub"
   ],
-  "homepage": "https://github.com/developit/mitt",
+  "homepage": "https://github.com/knemerzitski/mitt",
   "authors": [
     "Jason Miller <jason@developit.ca>"
   ],
