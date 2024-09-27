@@ -34,13 +34,11 @@ export interface Emitter<Events extends BaseEvents> {
 		type: Key,
 		handler: Handler<Events[Key]>
 	): () => void;
-	on(type: '*', handler: WildcardHandler<Events>): () => void;
-
-	onMany<Key extends keyof Events>(
+	on<Key extends keyof Events>(
 		types: Key[],
 		handler: Handler<Events[Key]>
 	): () => void;
-	onMany(types: '*'[], handler: WildcardHandler<Events>): () => void;
+	on(type: '*', handler: WildcardHandler<Events>): () => void;
 
 	off<Key extends keyof Events>(
 		type: Key,
@@ -67,13 +65,7 @@ export default function mitt<Events extends BaseEvents>(
 		| WildcardHandler<Events>;
 	all = all || new Map();
 
-	/**
-	 * Register an event handler for the given type.
-	 * @param {string|symbol} type Type of event to listen for, or `'*'` for all events
-	 * @param {Function} handler Function to call in response to given event
-	 * @memberOf mitt
-	 */
-	function on<Key extends keyof Events>(
+	function _on<Key extends keyof Events>(
 		type: Key,
 		handler: GenericEventHandler
 	) {
@@ -89,15 +81,32 @@ export default function mitt<Events extends BaseEvents>(
 		};
 	}
 
-	function onMany<Key extends keyof Events>(
+	function _onArray<Key extends keyof Events>(
 		types: Key[],
 		handler: GenericEventHandler
 	) {
-		types.forEach((type) => on(type, handler));
+		types.forEach((type) => _on(type, handler));
 
 		return () => {
 			types.forEach((type) => off(type, handler));
 		};
+	}
+
+	/**
+	 * Register an event handler for the given type.
+	 * @param {string|symbol} type Type of event to listen for, or `'*'` for all events
+	 * @param {Function} handler Function to call in response to given event
+	 * @memberOf mitt
+	 */
+	function on<Key extends keyof Events>(
+		type: Key | Key[],
+		handler: GenericEventHandler
+	) {
+		if (Array.isArray(type)) {
+			return _onArray(type, handler);
+		}
+
+		return _on(type, handler);
 	}
 
 	/**
@@ -155,7 +164,6 @@ export default function mitt<Events extends BaseEvents>(
 		 */
 		all,
 		on,
-		onMany,
 		off,
 		emit
 	};
