@@ -20,6 +20,13 @@ export type EventHandlerMap<Events extends BaseEvents> = Map<
 	EventHandlerList<Events[keyof Events]> | WildCardEventHandlerList<Events>
 >;
 
+export type EmitterEvents<T> = T extends Emitter<infer R> ? R : never;
+
+export type EmitterPickEvents<
+	T extends Emitter<BaseEvents>,
+	P extends keyof EmitterEvents<T>
+> = Emitter<Pick<EmitterEvents<T>, P>>;
+
 export interface Emitter<Events extends BaseEvents> {
 	all: EventHandlerMap<Events>;
 
