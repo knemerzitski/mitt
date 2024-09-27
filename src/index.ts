@@ -23,7 +23,7 @@ export type EventHandlerMap<Events extends BaseEvents> = Map<
 export type EmitterEvents<T> = T extends Emitter<infer R> ? R : never;
 
 export type EmitterPickEvents<
-	T extends Emitter<BaseEvents>,
+	T extends Emitter<any>,
 	P extends keyof EmitterEvents<T>
 > = Emitter<Pick<EmitterEvents<T>, P>>;
 
