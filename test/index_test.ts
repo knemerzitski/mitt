@@ -103,6 +103,13 @@ describe('mitt#', () => {
 			inst.on('foo', foo);
 			expect(events.get('foo')).to.deep.equal([foo, foo]);
 		});
+
+		it('should return closure that calls off', () => {
+			const foo = () => {};
+			const fooOff = inst.on('foo', foo);
+			fooOff();
+			expect(events.get('foo')).to.deep.equal([]);
+		});
 	});
 
 	describe('off()', () => {

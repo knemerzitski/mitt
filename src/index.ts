@@ -23,8 +23,11 @@ export type EventHandlerMap<Events extends BaseEvents> = Map<
 export interface Emitter<Events extends BaseEvents> {
 	all: EventHandlerMap<Events>;
 
-	on<Key extends keyof Events>(type: Key, handler: Handler<Events[Key]>): void;
-	on(type: '*', handler: WildcardHandler<Events>): void;
+	on<Key extends keyof Events>(
+		type: Key,
+		handler: Handler<Events[Key]>
+	): () => void;
+	on(type: '*', handler: WildcardHandler<Events>): () => void;
 
 	off<Key extends keyof Events>(
 		type: Key,
@@ -67,6 +70,10 @@ export default function mitt<Events extends BaseEvents>(
 		} else {
 			all!.set(type, [handler] as EventHandlerList<Events[keyof Events]>);
 		}
+
+		return () => {
+			off(type, handler);
+		};
 	}
 
 	/**
