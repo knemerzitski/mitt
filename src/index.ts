@@ -4,8 +4,7 @@ export type BaseEvents = object;
 // and should not return a value
 export type Handler<T = unknown> = (event: T) => void;
 export type WildcardHandler<T = Record<string, unknown>> = (
-	type: keyof T,
-	event: T[keyof T]
+	payload: PickEventUnion<T, keyof T>
 ) => void;
 
 type PickEventUnion<T, P extends keyof T> = {
@@ -180,12 +179,12 @@ export default function mitt<Events extends BaseEvents>(
 		handler?: GenericEventHandler
 	) {
 		if (typeof type === 'string') {
-		const handlers: Array<GenericEventHandler> | undefined = all!.get(type);
-		if (handlers) {
-			if (handler) {
-				handlers.splice(handlers.indexOf(handler) >>> 0, 1);
-			} else {
-				all!.set(type, []);
+			const handlers: Array<GenericEventHandler> | undefined = all!.get(type);
+			if (handlers) {
+				if (handler) {
+					handlers.splice(handlers.indexOf(handler) >>> 0, 1);
+				} else {
+					all!.set(type, []);
 				}
 			}
 		} else if (typeof type === 'function') {
@@ -227,7 +226,10 @@ export default function mitt<Events extends BaseEvents>(
 		handlers = all!.get('*');
 		if (handlers) {
 			(handlers as WildCardEventHandlerList<Events>).slice().map((handler) => {
-				handler(type, evt!);
+				handler({
+					type,
+					event: evt!
+				});
 			});
 		}
 	}

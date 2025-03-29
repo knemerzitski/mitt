@@ -261,11 +261,17 @@ describe('mitt#', () => {
 			events.set('*', [star]);
 
 			inst.emit('foo', ea);
-			expect(star).to.have.been.calledOnce.and.calledWith('foo', ea);
+			expect(star).to.have.been.calledOnce.and.calledWith({
+				type: 'foo',
+				event: ea
+			});
 			star.resetHistory();
 
 			inst.emit('bar', eb);
-			expect(star).to.have.been.calledOnce.and.calledWith('bar', eb);
+			expect(star).to.have.been.calledOnce.and.calledWith({
+				type: 'bar',
+				event: eb
+			});
 		});
 	});
 });

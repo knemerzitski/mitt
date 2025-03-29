@@ -15,8 +15,19 @@ const emitter = mitt<{
 const barHandler = (x?: number) => {};
 const fooHandler = (x: string) => {};
 const wildcardHandler = (
-	_type: 'foo' | 'bar' | 'someEvent',
-	_event: string | SomeEventData | number | undefined
+	_payload:
+		| {
+				type: 'foo';
+				event: string;
+		  }
+		| {
+				type: 'bar';
+				event: number | undefined;
+		  }
+		| {
+				type: 'someEvent';
+				event: SomeEventData;
+		  }
 ) => {};
 
 /*
@@ -32,8 +43,6 @@ const wildcardHandler = (
 	emitter.on('bar', fooHandler);
 
 	emitter.on('*', wildcardHandler);
-	// fooHandler is ok, because ('foo' | 'bar' | 'someEvent') extends string
-	emitter.on('*', fooHandler);
 	// @ts-expect-error
 	emitter.on('*', barHandler);
 }
@@ -51,8 +60,6 @@ const wildcardHandler = (
 	emitter.off('bar', fooHandler);
 
 	emitter.off('*', wildcardHandler);
-	// fooHandler is ok, because ('foo' | 'bar' | 'someEvent') extends string
-	emitter.off('*', fooHandler);
 	// @ts-expect-error
 	emitter.off('*', barHandler);
 }
@@ -86,6 +93,21 @@ const wildcardHandler = (
 			event satisfies string;
 		} else if (type === 'bar') {
 			event satisfies number | undefined;
+		}
+	});
+}
+
+/**
+ * Listening to all events distributes union of all events
+ */
+{
+	emitter.on('*', ({ type, event }) => {
+		if (type === 'foo') {
+			event satisfies string;
+		} else if (type === 'bar') {
+			event satisfies number | undefined;
+		} else if (type === 'someEvent') {
+			event satisfies SomeEventData;
 		}
 	});
 }
