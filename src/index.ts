@@ -8,6 +8,16 @@ export type WildcardHandler<T = Record<string, unknown>> = (
 	event: T[keyof T]
 ) => void;
 
+type PickEventUnion<T, P extends keyof T> = {
+	[K in keyof T]-?: {
+		type: K;
+		event: T[K];
+	};
+}[P];
+export type PickHandler<T, K extends keyof T> = (
+	payload: PickEventUnion<T, K>
+) => void;
+
 // An array of all currently registered event handlers for a type
 export type EventHandlerList<T = unknown> = Array<Handler<T>>;
 export type WildCardEventHandlerList<T = Record<string, unknown>> = Array<
@@ -62,10 +72,11 @@ export interface Emitter<Events extends BaseEvents> {
 	): () => void;
 	on<Key extends keyof Events>(
 		types: Key[],
-		handler: Handler<Events[Key]>
+		handler: PickHandler<Events, Key>
 	): () => void;
 	on(type: '*', handler: WildcardHandler<Events>): () => void;
 
+	off<Key extends keyof Events>(handler: Handler<Events[Key]>): void;
 	off<Key extends keyof Events>(
 		type: Key,
 		handler?: Handler<Events[Key]>
@@ -88,6 +99,7 @@ export default function mitt<Events extends BaseEvents>(
 ): Emitter<Events> {
 	type GenericEventHandler =
 		| Handler<Events[keyof Events]>
+		| PickHandler<Events, keyof Events>
 		| WildcardHandler<Events>;
 	all = all || new Map();
 
@@ -107,15 +119,36 @@ export default function mitt<Events extends BaseEvents>(
 		};
 	}
 
+	// eslint-disable-next-line no-spaced-func
+	const onArrayStateByHandler = new WeakMap<
+		object,
+		{ off: () => void; count: number }
+	>();
 	function _onArray<Key extends keyof Events>(
 		types: Key[],
-		handler: GenericEventHandler
+		handler: PickHandler<Events, Key>
 	) {
-		types.forEach((type) => _on(type, handler));
+		const state = onArrayStateByHandler.get(handler);
+		if (state) {
+			state.count++;
+			return state.off;
+		}
 
-		return () => {
-			types.forEach((type) => off(type, handler));
+		const localOffs = types.map((type) =>
+			_on(type, (event: any) => {
+				handler({ type, event });
+			})
+		);
+		const offAll = () => {
+			localOffs.forEach((localOff) => localOff());
 		};
+		if (onArrayStateByHandler.has(handler)) {
+			onArrayStateByHandler.get(handler)!.count++;
+		} else {
+			onArrayStateByHandler.set(handler, { off: offAll, count: 1 });
+		}
+
+		return offAll;
 	}
 
 	/**
@@ -129,7 +162,7 @@ export default function mitt<Events extends BaseEvents>(
 		handler: GenericEventHandler
 	) {
 		if (Array.isArray(type)) {
-			return _onArray(type, handler);
+			return _onArray(type, handler as PickHandler<Events, Key>);
 		}
 
 		return _on(type, handler);
@@ -143,15 +176,30 @@ export default function mitt<Events extends BaseEvents>(
 	 * @memberOf mitt
 	 */
 	function off<Key extends keyof Events>(
-		type: Key,
+		type: Key | GenericEventHandler,
 		handler?: GenericEventHandler
 	) {
+		if (typeof type === 'string') {
 		const handlers: Array<GenericEventHandler> | undefined = all!.get(type);
 		if (handlers) {
 			if (handler) {
 				handlers.splice(handlers.indexOf(handler) >>> 0, 1);
 			} else {
 				all!.set(type, []);
+				}
+			}
+		} else if (typeof type === 'function') {
+			const handler = type;
+			const state = onArrayStateByHandler.get(handler);
+			if (!state) {
+				return;
+			}
+
+			if (state?.count <= 1) {
+				state.off();
+				onArrayStateByHandler.delete(handler);
+			} else {
+				state.count--;
 			}
 		}
 	}

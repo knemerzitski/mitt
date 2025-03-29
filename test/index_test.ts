@@ -111,17 +111,62 @@ describe('mitt#', () => {
 			expect(events.get('foo')).to.deep.equal([]);
 		});
 
-		it('array: should add same listener to all types', () => {
-			const ev = () => {};
-			inst.on(['foo', 'bar'], ev);
-			expect(events.get('foo')).to.deep.equal([ev]);
-			expect(events.get('bar')).to.deep.equal([ev]);
-		});
-
 		it('array: should return closure that calls off for each type', () => {
 			const ev = () => {};
 			const foobarOff = inst.on(['foo', 'bar'], ev);
 			foobarOff();
+			expect(events.get('foo')).to.deep.equal([]);
+			expect(events.get('bar')).to.deep.equal([]);
+		});
+
+		it('array: emits payload object with type and event', () => {
+			const onFooBar = spy();
+			inst.on(['foo', 'bar'], onFooBar);
+
+			onFooBar.calledWithExactly([]);
+
+			expect(onFooBar).to.not.have.been.called;
+			inst.emit('foo', 'str');
+			inst.emit('bar', 5);
+
+			expect(onFooBar).to.not.have.been.calledWithExactly([
+				[
+					{
+						event: 'str',
+						type: 'foo'
+					}
+				],
+				[
+					{
+						event: 5,
+						type: 'bar'
+					}
+				]
+			]);
+		});
+
+		it('array: off event by handler reference', () => {
+			const ev = () => {};
+			inst.on(['foo', 'bar'], ev);
+			inst.off(ev);
+
+			expect(events.get('foo')).to.deep.equal([]);
+			expect(events.get('bar')).to.deep.equal([]);
+		});
+
+		it('array: keeps track of on and off calls', () => {
+			const ev = () => {};
+			inst.on(['foo', 'bar'], ev);
+			inst.on(['foo', 'bar'], ev);
+
+			expect(events.get('foo')).to.have.length(1);
+			expect(events.get('bar')).to.have.length(1);
+
+			inst.off(ev);
+			expect(events.get('foo')).to.have.length(1);
+			expect(events.get('bar')).to.have.length(1);
+
+			inst.off(ev);
 			expect(events.get('foo')).to.deep.equal([]);
 			expect(events.get('bar')).to.deep.equal([]);
 		});

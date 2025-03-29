@@ -76,3 +76,16 @@ const wildcardHandler = (
 	// @ts-expect-error
 	emitter.emit('bar', 'string');
 }
+
+/*
+ * Listening to multiple events distributes union of events
+ */
+{
+	emitter.on(['foo', 'bar'], ({ type, event }) => {
+		if (type === 'foo') {
+			event satisfies string;
+		} else if (type === 'bar') {
+			event satisfies number | undefined;
+		}
+	});
+}
