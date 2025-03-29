@@ -29,42 +29,31 @@ export type EventHandlerMap<Events extends BaseEvents> = Map<
 	EventHandlerList<Events[keyof Events]> | WildCardEventHandlerList<Events>
 >;
 
-export type EmitterEvents<T> = T extends Emitter<infer R>
-	? R
-	: T extends LimitedEmitter<infer R>
-	? R
-	: never;
+export type PickReadEmitter<
+	T extends BaseEvents,
+	P extends keyof T
+> = NoWildOnOffEmitter<Pick<T, P>>;
 
-export type EmitterPickEvents<
-	T extends LimitedEmitter<any>,
-	P extends keyof EmitterEvents<T>
-> = LimitedEmitter<Pick<EmitterEvents<T>, P>>;
+export type ReadEmitter<Events extends BaseEvents> = OnOffEmitter<Events>;
 
-interface LimitedEmitter<Events extends BaseEvents> {
+interface NoWildOnOffEmitter<Events extends BaseEvents> {
 	on<Key extends keyof Events>(
 		type: Key,
 		handler: Handler<Events[Key]>
 	): () => void;
-
 	on<Key extends keyof Events>(
 		types: Key[],
-		handler: Handler<Events[Key]>
+		handler: PickHandler<Events, Key>
 	): () => void;
 
+	off<Key extends keyof Events>(handler: Handler<Events[Key]>): void;
 	off<Key extends keyof Events>(
 		type: Key,
 		handler?: Handler<Events[Key]>
 	): void;
-
-	emit<Key extends keyof Events>(type: Key, event: Events[Key]): void;
-	emit<Key extends keyof Events>(
-		type: undefined extends Events[Key] ? Key : never
-	): void;
 }
 
-export interface Emitter<Events extends BaseEvents> {
-	all: EventHandlerMap<Events>;
-
+interface OnOffEmitter<Events extends BaseEvents> {
 	on<Key extends keyof Events>(
 		type: Key,
 		handler: Handler<Events[Key]>
@@ -81,6 +70,11 @@ export interface Emitter<Events extends BaseEvents> {
 		handler?: Handler<Events[Key]>
 	): void;
 	off(type: '*', handler: WildcardHandler<Events>): void;
+}
+
+export interface Emitter<Events extends BaseEvents>
+	extends OnOffEmitter<Events> {
+	all: EventHandlerMap<Events>;
 
 	emit<Key extends keyof Events>(type: Key, event: Events[Key]): void;
 	emit<Key extends keyof Events>(
