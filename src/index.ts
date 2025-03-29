@@ -76,6 +76,16 @@ export interface Emitter<Events extends BaseEvents>
 	extends OnOffEmitter<Events> {
 	all: EventHandlerMap<Events>;
 
+	emit<Key extends keyof Events>(
+		payload: undefined extends Events[Key]
+			? {
+					type: Key;
+			  }
+			: {
+					type: Key;
+					event: Events[Key];
+			  }
+	): void;
 	emit<Key extends keyof Events>(type: Key, event: Events[Key]): void;
 	emit<Key extends keyof Events>(
 		type: undefined extends Events[Key] ? Key : never
@@ -207,7 +217,18 @@ export default function mitt<Events extends BaseEvents>(
 	 * @param {Any} [evt] Any value (object is recommended and powerful), passed to each handler
 	 * @memberOf mitt
 	 */
-	function emit<Key extends keyof Events>(type: Key, evt?: Events[Key]) {
+	function emit<Key extends keyof Events>(
+		typeOrPayload: Key | { type: Key; event?: Events[Key] },
+		evt?: Events[Key]
+	) {
+		let type: Key;
+		if (typeof typeOrPayload === 'object') {
+			type = typeOrPayload.type;
+			evt = typeOrPayload.event;
+		} else {
+			type = typeOrPayload;
+		}
+
 		let handlers = all!.get(type);
 		if (handlers) {
 			(handlers as EventHandlerList<Events[keyof Events]>)
